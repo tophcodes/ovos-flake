@@ -38,11 +38,6 @@ in {
       description = "Directory for OVOS state and data";
     };
 
-    configDir = mkOption {
-      type = types.str;
-      default = "/etc/ovos";
-      description = "Directory for OVOS configuration files";
-    };
 
     host = mkOption {
       type = types.str;
@@ -191,19 +186,10 @@ in {
         # ProtectHome = true;
         ReadWritePaths = [
           cfg.stateDir
-          cfg.configDir
         ];
       };
 
-      environment = {
-        MYCROFT_SYSTEM_CONFIG = "${cfg.configDir}/mycroft.conf";
-        OVOS_LOG_LEVEL = cfg.logLevel;
-        XDG_CONFIG_HOME = "${cfg.stateDir}/.config";
-        HOME = cfg.stateDir;
-        TMPDIR = "${cfg.stateDir}/tmp";
-      };
-
-      preStart = let
+      environment = let
         # Build config using proper Nix attrsets
         mycroftConfig = {
           websocket = {
@@ -254,16 +240,18 @@ in {
 
         # Generate config file declaratively in Nix store
         configFile = pkgs.writeText "mycroft.conf" (builtins.toJSON mycroftConfig);
-      in ''
+      in {
+        MYCROFT_SYSTEM_CONFIG = toString configFile;
+        OVOS_LOG_LEVEL = cfg.logLevel;
+        XDG_CONFIG_HOME = "${cfg.stateDir}/.config";
+        HOME = cfg.stateDir;
+        TMPDIR = "${cfg.stateDir}/tmp";
+      };
+
+      preStart = ''
         # Create temp directory for combo-lock
         mkdir -p ${cfg.stateDir}/tmp
         chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/tmp
-
-        # Always regenerate config from Nix-managed source
-        mkdir -p ${cfg.configDir}
-        cp ${configFile} ${cfg.configDir}/mycroft.conf
-        chown ${cfg.user}:${cfg.group} ${cfg.configDir}/mycroft.conf
-        chmod 644 ${cfg.configDir}/mycroft.conf
       '';
     };
 
