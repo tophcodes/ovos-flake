@@ -123,15 +123,22 @@ in {
 
         # Security hardening
         NoNewPrivileges = true;
-        PrivateTmp = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        ReadWritePaths = ["/var/lib/ovos"];
+        # PrivateTmp = true;  # Disabled - conflicts with memory-tempfile
+        # ProtectSystem = "strict";  # Disabled - blocks /run/user access
+        # ProtectHome = true;
+        ReadWritePaths = [
+          "/var/lib/ovos"
+          "/run/ovos"
+        ];
       };
 
       environment = {
-        OVOS_CONFIG_PATH = "/etc/ovos";
+        MYCROFT_SYSTEM_CONFIG = "/etc/ovos/mycroft.conf";
         OVOS_LOG_LEVEL = cfg.logLevel;
+        XDG_RUNTIME_DIR = "/run/ovos";
+        XDG_CONFIG_HOME = "/var/lib/ovos/.config";
+        HOME = "/var/lib/ovos";
+        TMPDIR = "/var/lib/ovos/tmp";
       };
 
       preStart = let
@@ -157,6 +164,10 @@ in {
             },''
           else "";
       in ''
+        # Create temp directory for combo-lock
+        mkdir -p /var/lib/ovos/tmp
+        chown ovos:ovos /var/lib/ovos/tmp
+
         # Create basic configuration if it doesn't exist
         mkdir -p /etc/ovos
         if [ ! -f /etc/ovos/mycroft.conf ]; then
@@ -177,6 +188,11 @@ in {
         fi
       '';
     };
+
+    # Create runtime directory for ovos user (memory-tempfile expects /run/user/{uid})
+    systemd.tmpfiles.rules = [
+      "d /run/user/${toString config.users.users.ovos.uid} 0700 ovos ovos -"
+    ];
 
     # Firewall configuration
     networking.firewall = mkIf cfg.openFirewall {

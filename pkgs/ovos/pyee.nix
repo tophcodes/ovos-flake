@@ -2,11 +2,18 @@
   lib,
   buildPythonPackage,
   fetchPypi,
+  setuptools,
+  setuptools-scm,
 }:
 buildPythonPackage rec {
   pname = "pyee";
   version = "11.1.1";
-  format = "setuptools";
+  format = "pyproject";
+
+  nativeBuildInputs = [
+    setuptools
+    setuptools-scm
+  ];
 
   src = fetchPypi {
     inherit pname version;

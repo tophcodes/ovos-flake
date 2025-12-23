@@ -3,6 +3,8 @@
   buildPythonPackage,
   fetchPypi,
   pyyaml,
+  combo-lock,
+  rich-click,
 }:
 buildPythonPackage rec {
   pname = "ovos-config";
@@ -16,6 +18,8 @@ buildPythonPackage rec {
 
   propagatedBuildInputs = [
     pyyaml
+    combo-lock
+    rich-click
   ];
 
   # Create dummy requirements files that setup.py expects

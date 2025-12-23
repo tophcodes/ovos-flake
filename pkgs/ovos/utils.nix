@@ -5,6 +5,13 @@
   requests,
   python-dateutil,
   kthread,
+  pexpect,
+  json-database,
+  watchdog,
+  pyee,
+  combo-lock,
+  rich-click,
+  rich,
 }:
 buildPythonPackage rec {
   pname = "ovos-utils";
@@ -21,6 +28,13 @@ buildPythonPackage rec {
     requests
     python-dateutil
     kthread
+    pexpect
+    json-database
+    watchdog
+    pyee
+    combo-lock
+    rich-click
+    rich
   ];
 
   # Create dummy requirements files that setup.py expects
