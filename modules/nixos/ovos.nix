@@ -189,59 +189,8 @@ in {
         ];
       };
 
-      environment = let
-        # Build config using proper Nix attrsets
-        mycroftConfig = {
-          websocket = {
-            host = cfg.host;
-            port = cfg.port;
-            route = "/core";
-            ssl = false;
-          };
-          location = {
-            city = {
-              code = cfg.location.city;
-              name = cfg.location.city;
-              state = {
-                code = cfg.location.state;
-                name = cfg.location.state;
-                country = {
-                  code = cfg.location.country;
-                  name = cfg.location.country;
-                };
-              };
-            };
-            coordinate = {
-              latitude = cfg.location.latitude;
-              longitude = cfg.location.longitude;
-            };
-            timezone = {
-              code = cfg.location.timezone;
-              name = cfg.location.timezone;
-            };
-          };
-          log_level = cfg.logLevel;
-        } // lib.optionalAttrs cfg.speech.enable {
-          tts = {
-            module = cfg.speech.backend;
-            piper = {
-              voice = cfg.speech.voice;
-            };
-          };
-        } // lib.optionalAttrs cfg.listener.enable {
-          stt = {
-            module = cfg.listener.backend;
-            faster_whisper = {
-              model = cfg.listener.model;
-              lang = cfg.listener.language;
-            };
-          };
-        };
-
-        # Generate config file declaratively in Nix store
-        configFile = pkgs.writeText "mycroft.conf" (builtins.toJSON mycroftConfig);
-      in {
-        MYCROFT_SYSTEM_CONFIG = toString configFile;
+      environment = {
+        # Config is available at /etc/mycroft/mycroft.conf (standard OVOS location)
         OVOS_LOG_LEVEL = cfg.logLevel;
         XDG_CONFIG_HOME = "${cfg.stateDir}/.config";
         HOME = cfg.stateDir;
@@ -253,6 +202,59 @@ in {
         mkdir -p ${cfg.stateDir}/tmp
         chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/tmp
       '';
+    };
+
+    # Create system-wide OVOS configuration
+    # This makes the config available to all OVOS services and CLI tools
+    environment.etc."mycroft/mycroft.conf" = let
+      mycroftConfig = {
+        websocket = {
+          host = cfg.host;
+          port = cfg.port;
+          route = "/core";
+          ssl = false;
+        };
+        location = {
+          city = {
+            code = cfg.location.city;
+            name = cfg.location.city;
+            state = {
+              code = cfg.location.state;
+              name = cfg.location.state;
+              country = {
+                code = cfg.location.country;
+                name = cfg.location.country;
+              };
+            };
+          };
+          coordinate = {
+            latitude = cfg.location.latitude;
+            longitude = cfg.location.longitude;
+          };
+          timezone = {
+            code = cfg.location.timezone;
+            name = cfg.location.timezone;
+          };
+        };
+        log_level = cfg.logLevel;
+      } // lib.optionalAttrs cfg.speech.enable {
+        tts = {
+          module = cfg.speech.backend;
+          piper = {
+            voice = cfg.speech.voice;
+          };
+        };
+      } // lib.optionalAttrs cfg.listener.enable {
+        stt = {
+          module = cfg.listener.backend;
+          faster_whisper = {
+            model = cfg.listener.model;
+            lang = cfg.listener.language;
+          };
+        };
+      };
+    in {
+      source = pkgs.writeText "mycroft.conf" (builtins.toJSON mycroftConfig);
     };
 
     # Firewall configuration
