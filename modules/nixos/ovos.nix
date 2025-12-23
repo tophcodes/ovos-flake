@@ -164,27 +164,33 @@ in {
       };
 
       preStart = let
-        ttsConfig =
-          if cfg.speech.enable
-          then ''
-            "tts": {
-              "module": "${cfg.speech.backend}",
-              "piper": {
-                "voice": "${cfg.speech.voice}"
-              }
-            },''
-          else "";
-        sttConfig =
-          if cfg.listener.enable
-          then ''
-            "stt": {
-              "module": "${cfg.listener.backend}",
-              "faster_whisper": {
-                "model": "${cfg.listener.model}",
-                "lang": "${cfg.listener.language}"
-              }
-            },''
-          else "";
+        # Build config using proper Nix attrsets
+        mycroftConfig = {
+          websocket = {
+            host = cfg.host;
+            port = cfg.port;
+            route = "/core";
+            ssl = false;
+          };
+          log_level = cfg.logLevel;
+        } // lib.optionalAttrs cfg.speech.enable {
+          tts = {
+            module = cfg.speech.backend;
+            piper = {
+              voice = cfg.speech.voice;
+            };
+          };
+        } // lib.optionalAttrs cfg.listener.enable {
+          stt = {
+            module = cfg.listener.backend;
+            faster_whisper = {
+              model = cfg.listener.model;
+              lang = cfg.listener.language;
+            };
+          };
+        };
+
+        configJson = builtins.toJSON mycroftConfig;
       in ''
         # Create temp directory for combo-lock
         mkdir -p ${cfg.stateDir}/tmp
@@ -193,19 +199,7 @@ in {
         # Create basic configuration if it doesn't exist
         mkdir -p ${cfg.configDir}
         if [ ! -f ${cfg.configDir}/mycroft.conf ]; then
-          cat > ${cfg.configDir}/mycroft.conf <<EOF
-        {
-          "websocket": {
-            "host": "${cfg.host}",
-            "port": ${toString cfg.port},
-            "route": "/core",
-            "ssl": false
-          },
-          ${ttsConfig}
-          ${sttConfig}
-          "log_level": "${cfg.logLevel}"
-        }
-        EOF
+          echo '${configJson}' > ${cfg.configDir}/mycroft.conf
           chown ${cfg.user}:${cfg.group} ${cfg.configDir}/mycroft.conf
         fi
       '';
