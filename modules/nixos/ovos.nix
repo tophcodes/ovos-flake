@@ -1,3 +1,10 @@
+# OpenVoiceOS NixOS Module
+#
+# This module provides declarative configuration for OpenVoiceOS,
+# including the message bus, TTS/STT services, and skills.
+#
+# TTS/STT models are managed through the flake's model registry (lib.models).
+# Voice models are automatically fetched and configured when enabled.
 {
   config,
   lib,
@@ -39,6 +46,46 @@ in {
       default = pkgs.ovosPackages.ovos-messagebus;
       defaultText = literalExpression "pkgs.ovosPackages.ovos-messagebus";
       description = "The ovos-messagebus package to use";
+    };
+
+    # TTS/Speech configuration
+    speech = {
+      enable = mkEnableOption "TTS speech service";
+
+      backend = mkOption {
+        type = types.str;
+        default = "piper";
+        description = "TTS backend to use (piper, etc.)";
+      };
+
+      voice = mkOption {
+        type = types.str;
+        default = "en_US-lessac-medium";
+        description = "Piper voice name from model registry";
+      };
+    };
+
+    # STT/Listener configuration
+    listener = {
+      enable = mkEnableOption "STT listener service";
+
+      backend = mkOption {
+        type = types.str;
+        default = "faster-whisper";
+        description = "STT backend to use (faster-whisper, etc.)";
+      };
+
+      model = mkOption {
+        type = types.str;
+        default = "base";
+        description = "Whisper model name from model registry";
+      };
+
+      language = mkOption {
+        type = types.str;
+        default = "en";
+        description = "Language code for speech recognition";
+      };
     };
   };
 
@@ -84,11 +131,33 @@ in {
         OVOS_LOG_LEVEL = cfg.logLevel;
       };
 
-      preStart = ''
-                # Create basic configuration if it doesn't exist
-                mkdir -p /etc/ovos
-                if [ ! -f /etc/ovos/mycroft.conf ]; then
-                  cat > /etc/ovos/mycroft.conf <<EOF
+      preStart = let
+        ttsConfig =
+          if cfg.speech.enable
+          then ''
+            "tts": {
+              "module": "${cfg.speech.backend}",
+              "piper": {
+                "voice": "${cfg.speech.voice}"
+              }
+            },''
+          else "";
+        sttConfig =
+          if cfg.listener.enable
+          then ''
+            "stt": {
+              "module": "${cfg.listener.backend}",
+              "faster_whisper": {
+                "model": "${cfg.listener.model}",
+                "lang": "${cfg.listener.language}"
+              }
+            },''
+          else "";
+      in ''
+        # Create basic configuration if it doesn't exist
+        mkdir -p /etc/ovos
+        if [ ! -f /etc/ovos/mycroft.conf ]; then
+          cat > /etc/ovos/mycroft.conf <<EOF
         {
           "websocket": {
             "host": "${cfg.host}",
@@ -96,11 +165,13 @@ in {
             "route": "/core",
             "ssl": false
           },
+          ${ttsConfig}
+          ${sttConfig}
           "log_level": "${cfg.logLevel}"
         }
         EOF
-                  chown ovos:ovos /etc/ovos/mycroft.conf
-                fi
+          chown ovos:ovos /etc/ovos/mycroft.conf
+        fi
       '';
     };
 

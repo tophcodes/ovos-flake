@@ -42,7 +42,7 @@
               ;
             default = ovosPackages.ovos-messagebus;
           }
-          // (nixpkgs.lib.mapAttrs' (name: value: nixpkgs.lib.nameValuePair "ovos-skill-${name}" value) ovosSkills);
+          // (nixpkgs.lib.mapAttrs' (name: value: nixpkgs.lib.nameValuePair "ovos-skill-${name}" value) (nixpkgs.lib.filterAttrs (n: v: nixpkgs.lib.isDerivation v) ovosSkills));
 
         # Development shell
         devShells.default = pkgs.mkShell {
@@ -69,6 +69,12 @@
       # Overlay
       overlays.default = final: prev: {
         ovosPackages = final.callPackage ./pkgs/ovos {};
+      };
+
+      # Library functions and model registry
+      lib = import ./lib {
+        lib = nixpkgs.lib;
+        pkgs = import nixpkgs {system = "x86_64-linux";};
       };
     };
 }
