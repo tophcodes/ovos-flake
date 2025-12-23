@@ -5,6 +5,7 @@
   pyyaml,
   combo-lock,
   rich-click,
+  ovos-utils,
 }:
 buildPythonPackage rec {
   pname = "ovos-config";
@@ -20,6 +21,7 @@ buildPythonPackage rec {
     pyyaml
     combo-lock
     rich-click
+    ovos-utils
   ];
 
   # Create dummy requirements files that setup.py expects
