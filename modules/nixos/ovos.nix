@@ -252,18 +252,18 @@ in {
           };
         };
 
-        configJson = builtins.toJSON mycroftConfig;
+        # Generate config file declaratively in Nix store
+        configFile = pkgs.writeText "mycroft.conf" (builtins.toJSON mycroftConfig);
       in ''
         # Create temp directory for combo-lock
         mkdir -p ${cfg.stateDir}/tmp
         chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/tmp
 
-        # Create basic configuration if it doesn't exist
+        # Always regenerate config from Nix-managed source
         mkdir -p ${cfg.configDir}
-        if [ ! -f ${cfg.configDir}/mycroft.conf ]; then
-          echo '${configJson}' > ${cfg.configDir}/mycroft.conf
-          chown ${cfg.user}:${cfg.group} ${cfg.configDir}/mycroft.conf
-        fi
+        cp ${configFile} ${cfg.configDir}/mycroft.conf
+        chown ${cfg.user}:${cfg.group} ${cfg.configDir}/mycroft.conf
+        chmod 644 ${cfg.configDir}/mycroft.conf
       '';
     };
 
