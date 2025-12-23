@@ -4,6 +4,7 @@
   fetchPypi,
   ovos-config,
   ovos-utils,
+  ovos-bus-client,
   langcodes,
   quebra-frases,
 }:
@@ -20,6 +21,7 @@ buildPythonPackage rec {
   propagatedBuildInputs = [
     ovos-config
     ovos-utils
+    ovos-bus-client
     langcodes
     quebra-frases
   ];

@@ -39,6 +39,7 @@
               ovos-workshop
               ovos-core
               ovos-audio
+              ovos-tts-plugin-piper
               ;
             default = ovosPackages.ovos-messagebus;
           }
