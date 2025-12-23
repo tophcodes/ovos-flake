@@ -42,7 +42,7 @@ Enable OpenVoiceOS with default settings:
 
 ```nix
 {
-  services.elements.ovos = {
+  services.ovos = {
     enable = true;
     openFirewall = true;  # Allow network access to message bus
   };
@@ -57,7 +57,7 @@ Enable voice services with specific models:
 
 ```nix
 {
-  services.elements.ovos = {
+  services.ovos = {
     enable = true;
     openFirewall = true;
 
@@ -251,7 +251,7 @@ The skill will be automatically exposed as `ovos-skill-weather` in the flake pac
 
 ```nix
 {
-  services.elements.ovos = {
+  services.ovos = {
     enable = true;
     host = "0.0.0.0";
     port = 8181;
@@ -279,7 +279,7 @@ The skill will be automatically exposed as `ovos-skill-weather` in the flake pac
 
 ```nix
 {
-  services.elements.ovos = {
+  services.ovos = {
     enable = true;
     host = "127.0.0.1";  # Local only
     logLevel = "DEBUG";
@@ -437,7 +437,7 @@ cat /etc/ovos/mycroft.conf
 
 Change the port in configuration:
 ```nix
-services.elements.ovos.port = 8182;
+services.ovos.port = 8182;
 ```
 
 ### Model download fails

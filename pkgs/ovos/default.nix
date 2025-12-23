@@ -7,6 +7,10 @@ lib.makeScope python3.pkgs.newScope (
   self: let
     callPackage = self.callPackage;
   in {
+    # Third-party dependencies not in nixpkgs or pinned versions
+    kthread = callPackage ./kthread.nix {};
+    pyee = callPackage ./pyee.nix {}; # Pin to 11.x for OVOS compatibility
+
     # Base dependencies (no OVOS dependencies)
     ovos-config = callPackage ./config.nix {};
     ovos-utils = callPackage ./utils.nix {};

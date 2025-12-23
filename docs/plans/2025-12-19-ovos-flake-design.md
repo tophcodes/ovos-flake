@@ -81,7 +81,7 @@ ovos-flake/
 ### Basic Structure
 
 ```nix
-services.elements.ovos = {
+services.ovos = {
   enable = mkEnableOption "OpenVoiceOS server";
 
   host = mkOption {
@@ -268,7 +268,7 @@ API key-based authentication for messagebus and HTTP APIs:
 ### Configuration Options
 
 ```nix
-services.elements.ovos.authentication = {
+services.ovos.authentication = {
   enable = true;
   apiKeys = [ "key1" "key2" ];  # Less secure, in nix store
   apiKeyFile = "/run/secrets/ovos-api-keys";  # Recommended
@@ -294,7 +294,7 @@ services.elements.ovos.authentication = {
 Skills are explicitly declared in configuration:
 
 ```nix
-services.elements.ovos.plugins.skills = {
+services.ovos.plugins.skills = {
   enable = true;
 
   skills = [
@@ -380,7 +380,7 @@ Centralized registry in `lib/models.nix`:
 ### Usage
 
 ```nix
-services.elements.ovos.plugins = {
+services.ovos.plugins = {
   speech = {
     voice = "en_US-lessac-medium";  # References registry
   };
@@ -401,7 +401,7 @@ services.elements.ovos.plugins = {
 ### Custom Models
 
 ```nix
-services.elements.ovos.plugins.speech = {
+services.ovos.plugins.speech = {
   customVoice = {
     path = /path/to/custom/model.onnx;
     config = /path/to/config.json;
@@ -507,7 +507,7 @@ systemd.services.ovos-messagebus.serviceConfig = {
 nixosTests.ovos = makeTest {
   name = "ovos-basic";
   nodes.machine = { ... }: {
-    services.elements.ovos = {
+    services.ovos = {
       enable = true;
       plugins.skills.enable = true;
     };
@@ -587,7 +587,7 @@ In consuming flake:
       modules = [
         ovos-flake.nixosModules.default
         {
-          services.elements.ovos = {
+          services.ovos = {
             enable = true;
             openFirewall = true;
 

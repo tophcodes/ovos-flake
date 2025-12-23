@@ -4,6 +4,7 @@
   fetchPypi,
   websocket-client,
   pyee,
+  orjson,
   ovos-config,
   ovos-utils,
 }:
@@ -20,6 +21,7 @@ buildPythonPackage rec {
   propagatedBuildInputs = [
     websocket-client
     pyee
+    orjson
     ovos-config
     ovos-utils
   ];

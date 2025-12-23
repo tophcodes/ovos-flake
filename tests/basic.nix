@@ -12,7 +12,7 @@ pkgs.testers.runNixOSTest {
   }: {
     imports = [self.nixosModules.default];
 
-    services.elements.ovos = {
+    services.ovos = {
       enable = true;
       openFirewall = true;
     };

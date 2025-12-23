@@ -12,12 +12,12 @@
   ...
 }:
 with lib; let
-  cfg = config.services.elements.ovos;
+  cfg = config.services.ovos;
 
   # Import OVOS packages directly so module doesn't depend on overlay
   ovosPackages = pkgs.callPackage ../../pkgs/ovos {};
 in {
-  options.services.elements.ovos = {
+  options.services.ovos = {
     enable = mkEnableOption "OpenVoiceOS server";
 
     host = mkOption {

@@ -4,6 +4,7 @@
   fetchPypi,
   requests,
   python-dateutil,
+  kthread,
 }:
 buildPythonPackage rec {
   pname = "ovos-utils";
@@ -17,9 +18,9 @@ buildPythonPackage rec {
   };
 
   propagatedBuildInputs = [
-    # Common Python utilities - minimal for now
     requests
     python-dateutil
+    kthread
   ];
 
   # Create dummy requirements files that setup.py expects

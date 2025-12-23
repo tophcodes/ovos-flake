@@ -6,7 +6,7 @@ This document shows how to configure Text-to-Speech (TTS) and Speech-to-Text (ST
 
 ```nix
 {
-  services.elements.ovos = {
+  services.ovos = {
     enable = true;
 
     # TTS Configuration
