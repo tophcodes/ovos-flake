@@ -75,6 +75,46 @@ in {
       description = "The ovos-messagebus package to use";
     };
 
+    # Location configuration
+    location = {
+      city = mkOption {
+        type = types.str;
+        default = "Lawrence";
+        description = "City name for location-based features";
+      };
+
+      state = mkOption {
+        type = types.str;
+        default = "Kansas";
+        description = "State/region name";
+      };
+
+      country = mkOption {
+        type = types.str;
+        default = "USA";
+        description = "Country name";
+      };
+
+      timezone = mkOption {
+        type = types.str;
+        default = "America/Chicago";
+        example = "Europe/Berlin";
+        description = "Timezone code (e.g., America/New_York, Europe/London)";
+      };
+
+      latitude = mkOption {
+        type = types.float;
+        default = 38.9717;
+        description = "Latitude coordinate";
+      };
+
+      longitude = mkOption {
+        type = types.float;
+        default = -95.2353;
+        description = "Longitude coordinate";
+      };
+    };
+
     # TTS/Speech configuration
     speech = {
       enable = mkEnableOption "TTS speech service";
@@ -171,6 +211,28 @@ in {
             port = cfg.port;
             route = "/core";
             ssl = false;
+          };
+          location = {
+            city = {
+              code = cfg.location.city;
+              name = cfg.location.city;
+              state = {
+                code = cfg.location.state;
+                name = cfg.location.state;
+                country = {
+                  code = cfg.location.country;
+                  name = cfg.location.country;
+                };
+              };
+            };
+            coordinate = {
+              latitude = cfg.location.latitude;
+              longitude = cfg.location.longitude;
+            };
+            timezone = {
+              code = cfg.location.timezone;
+              name = cfg.location.timezone;
+            };
           };
           log_level = cfg.logLevel;
         } // lib.optionalAttrs cfg.speech.enable {
