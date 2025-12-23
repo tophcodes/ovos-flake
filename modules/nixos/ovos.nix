@@ -13,6 +13,9 @@
 }:
 with lib; let
   cfg = config.services.elements.ovos;
+
+  # Import OVOS packages directly so module doesn't depend on overlay
+  ovosPackages = pkgs.callPackage ../../pkgs/ovos {};
 in {
   options.services.elements.ovos = {
     enable = mkEnableOption "OpenVoiceOS server";
@@ -43,7 +46,7 @@ in {
 
     package = mkOption {
       type = types.package;
-      default = pkgs.ovosPackages.ovos-messagebus;
+      default = ovosPackages.ovos-messagebus;
       defaultText = literalExpression "pkgs.ovosPackages.ovos-messagebus";
       description = "The ovos-messagebus package to use";
     };
