@@ -211,10 +211,8 @@ in {
       '';
     };
 
-    # Create runtime directory for ovos user (memory-tempfile expects /run/user/{uid})
-    systemd.tmpfiles.rules = [
-      "d /run/user/${toString config.users.users.${cfg.user}.uid} 0700 ${cfg.user} ${cfg.group} -"
-    ];
+    # Note: We don't create /run/user/{uid} because it can break system-wide /run/user permissions
+    # Instead, we rely on TMPDIR=/var/lib/ovos/tmp set in the service environment
 
     # Firewall configuration
     networking.firewall = mkIf cfg.openFirewall {
