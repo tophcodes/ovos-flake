@@ -14,7 +14,19 @@ lib.makeScope python3.pkgs.newScope (
     # Bus client (depends on config and utils)
     ovos-bus-client = callPackage ./bus-client.nix {};
 
+    # Plugin manager (depends on config and utils)
+    ovos-plugin-manager = callPackage ./plugin-manager.nix {};
+
+    # Workshop (depends on bus-client, config, utils, plugin-manager)
+    ovos-workshop = callPackage ./workshop.nix {};
+
     # Messagebus (depends on bus-client, utils, config)
     ovos-messagebus = callPackage ./messagebus.nix {};
+
+    # Core (depends on most other packages)
+    ovos-core = callPackage ./core.nix {};
+
+    # Audio service (depends on utils, bus-client, config, plugin-manager)
+    ovos-audio = callPackage ./audio.nix {};
   }
 )

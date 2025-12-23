@@ -22,12 +22,27 @@
           overlays = [self.overlays.default];
         };
         ovosPackages = pkgs.callPackage ./pkgs/ovos {};
+        ovosSkills = pkgs.callPackage ./pkgs/ovos-skills {
+          ovos-workshop = ovosPackages.ovos-workshop;
+        };
       in {
         # Packages
-        packages = {
-          inherit (ovosPackages) ovos-messagebus ovos-bus-client ovos-config ovos-utils;
-          default = ovosPackages.ovos-messagebus;
-        };
+        packages =
+          {
+            inherit
+              (ovosPackages)
+              ovos-messagebus
+              ovos-bus-client
+              ovos-config
+              ovos-utils
+              ovos-plugin-manager
+              ovos-workshop
+              ovos-core
+              ovos-audio
+              ;
+            default = ovosPackages.ovos-messagebus;
+          }
+          // (nixpkgs.lib.mapAttrs' (name: value: nixpkgs.lib.nameValuePair "ovos-skill-${name}" value) ovosSkills);
 
         # Development shell
         devShells.default = pkgs.mkShell {
