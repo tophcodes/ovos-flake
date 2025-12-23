@@ -20,6 +20,30 @@ in {
   options.services.ovos = {
     enable = mkEnableOption "OpenVoiceOS server";
 
+    user = mkOption {
+      type = types.str;
+      default = "ovos";
+      description = "The user to run the server as";
+    };
+
+    group = mkOption {
+      type = types.str;
+      default = "ovos";
+      description = "The group to run the server as";
+    };
+
+    stateDir = mkOption {
+      type = types.str;
+      default = "/var/lib/ovos";
+      description = "Directory for OVOS state and data";
+    };
+
+    configDir = mkOption {
+      type = types.str;
+      default = "/etc/ovos";
+      description = "Directory for OVOS configuration files";
+    };
+
     host = mkOption {
       type = types.str;
       default = "0.0.0.0";
@@ -94,15 +118,17 @@ in {
 
   config = mkIf cfg.enable {
     # Create ovos user and group
-    users.users.ovos = {
-      isSystemUser = true;
-      group = "ovos";
-      home = "/var/lib/ovos";
-      createHome = true;
-      description = "OpenVoiceOS system user";
-    };
+    users = {
+      users.${cfg.user} = {
+        isSystemUser = lib.mkDefault true;
+        group = lib.mkDefault cfg.group;
+        home = lib.mkDefault cfg.stateDir;
+        createHome = lib.mkDefault true;
+        description = lib.mkDefault "OpenVoiceOS system user";
+      };
 
-    users.groups.ovos = {};
+      groups.${cfg.group} = {};
+    };
 
     # Systemd service for ovos-messagebus
     systemd.services.ovos-messagebus = {
@@ -112,14 +138,11 @@ in {
 
       serviceConfig = {
         Type = "simple";
-        User = "ovos";
-        Group = "ovos";
+        User = cfg.user;
+        Group = cfg.group;
         ExecStart = "${cfg.package}/bin/ovos-messagebus";
         Restart = "on-failure";
         RestartSec = "5s";
-        StateDirectory = "ovos";
-        ConfigurationDirectory = "ovos";
-        RuntimeDirectory = "ovos";
 
         # Security hardening
         NoNewPrivileges = true;
@@ -127,18 +150,17 @@ in {
         # ProtectSystem = "strict";  # Disabled - blocks /run/user access
         # ProtectHome = true;
         ReadWritePaths = [
-          "/var/lib/ovos"
-          "/run/ovos"
+          cfg.stateDir
+          cfg.configDir
         ];
       };
 
       environment = {
-        MYCROFT_SYSTEM_CONFIG = "/etc/ovos/mycroft.conf";
+        MYCROFT_SYSTEM_CONFIG = "${cfg.configDir}/mycroft.conf";
         OVOS_LOG_LEVEL = cfg.logLevel;
-        XDG_RUNTIME_DIR = "/run/ovos";
-        XDG_CONFIG_HOME = "/var/lib/ovos/.config";
-        HOME = "/var/lib/ovos";
-        TMPDIR = "/var/lib/ovos/tmp";
+        XDG_CONFIG_HOME = "${cfg.stateDir}/.config";
+        HOME = cfg.stateDir;
+        TMPDIR = "${cfg.stateDir}/tmp";
       };
 
       preStart = let
@@ -165,13 +187,13 @@ in {
           else "";
       in ''
         # Create temp directory for combo-lock
-        mkdir -p /var/lib/ovos/tmp
-        chown ovos:ovos /var/lib/ovos/tmp
+        mkdir -p ${cfg.stateDir}/tmp
+        chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/tmp
 
         # Create basic configuration if it doesn't exist
-        mkdir -p /etc/ovos
-        if [ ! -f /etc/ovos/mycroft.conf ]; then
-          cat > /etc/ovos/mycroft.conf <<EOF
+        mkdir -p ${cfg.configDir}
+        if [ ! -f ${cfg.configDir}/mycroft.conf ]; then
+          cat > ${cfg.configDir}/mycroft.conf <<EOF
         {
           "websocket": {
             "host": "${cfg.host}",
@@ -184,14 +206,14 @@ in {
           "log_level": "${cfg.logLevel}"
         }
         EOF
-          chown ovos:ovos /etc/ovos/mycroft.conf
+          chown ${cfg.user}:${cfg.group} ${cfg.configDir}/mycroft.conf
         fi
       '';
     };
 
     # Create runtime directory for ovos user (memory-tempfile expects /run/user/{uid})
     systemd.tmpfiles.rules = [
-      "d /run/user/${toString config.users.users.ovos.uid} 0700 ovos ovos -"
+      "d /run/user/${toString config.users.users.${cfg.user}.uid} 0700 ${cfg.user} ${cfg.group} -"
     ];
 
     # Firewall configuration
