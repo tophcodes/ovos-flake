@@ -12,6 +12,7 @@ lib.makeScope python3.pkgs.newScope (
     pyee = callPackage ./pyee.nix {}; # Pin to 11.x for OVOS compatibility
     combo-lock = callPackage ./combo-lock.nix {};
     json-database = callPackage ./json-database.nix {};
+    quebra-frases = callPackage ./quebra-frases.nix {};
 
     # Base dependencies (no OVOS dependencies)
     ovos-config = callPackage ./config.nix {};

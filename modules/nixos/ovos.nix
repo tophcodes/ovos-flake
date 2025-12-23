@@ -205,9 +205,6 @@ in {
       '';
     };
 
-    # Note: We don't create /run/user/{uid} because it can break system-wide /run/user permissions
-    # Instead, we rely on TMPDIR=/var/lib/ovos/tmp set in the service environment
-
     # Firewall configuration
     networking.firewall = mkIf cfg.openFirewall {
       allowedTCPPorts = [cfg.port];

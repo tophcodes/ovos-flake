@@ -5,6 +5,7 @@
   ovos-config,
   ovos-utils,
   langcodes,
+  quebra-frases,
 }:
 buildPythonPackage rec {
   pname = "ovos-plugin-manager";
@@ -20,6 +21,7 @@ buildPythonPackage rec {
     ovos-config
     ovos-utils
     langcodes
+    quebra-frases
   ];
 
   # Create dummy requirements files
