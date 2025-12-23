@@ -6,6 +6,7 @@
   ovos-bus-client,
   ovos-config,
   ovos-plugin-manager,
+  ovos-tts-plugin-piper,
 }:
 buildPythonApplication rec {
   pname = "ovos-audio";
@@ -22,6 +23,7 @@ buildPythonApplication rec {
     ovos-bus-client
     ovos-config
     ovos-plugin-manager
+    ovos-tts-plugin-piper  # Include piper TTS plugin
   ];
 
   # Create dummy requirements files

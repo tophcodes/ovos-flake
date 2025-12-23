@@ -6,6 +6,7 @@
   ovos-config,
   ovos-utils,
   ovos-plugin-manager,
+  ovos-number-parser,
   requests,
 }:
 buildPythonPackage rec {
@@ -24,6 +25,7 @@ buildPythonPackage rec {
     ovos-config
     ovos-utils
     ovos-plugin-manager
+    ovos-number-parser
     requests
   ];
 

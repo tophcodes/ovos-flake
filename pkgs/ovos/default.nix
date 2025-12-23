@@ -13,6 +13,7 @@ lib.makeScope python3.pkgs.newScope (
     combo-lock = callPackage ./combo-lock.nix {};
     json-database = callPackage ./json-database.nix {};
     quebra-frases = callPackage ./quebra-frases.nix {};
+    ovos-number-parser = callPackage ./number-parser.nix {};
 
     # Base dependencies (no OVOS dependencies)
     ovos-config = callPackage ./config.nix {};
