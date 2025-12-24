@@ -10,6 +10,9 @@
 }:
 with lib; let
   cfg = config.services.ovos;
+
+  # Import OVOS packages directly so module doesn't depend on overlay
+  ovosPackages = pkgs.callPackage ../../pkgs/ovos {};
 in {
   options.services.ovos = {
     messagebusHost = mkOption {
@@ -30,8 +33,8 @@ in {
 
       package = mkOption {
         type = types.package;
-        default = pkgs.ovosPackages.ovos-audio;
-        defaultText = literalExpression "pkgs.ovosPackages.ovos-audio";
+        default = ovosPackages.ovos-audio;
+        defaultText = literalExpression "ovosPackages.ovos-audio";
         description = "The ovos-audio package to use";
       };
 
@@ -71,8 +74,8 @@ in {
 
           Environment = [
             "OVOS_LOG_LEVEL=${cfg.audio.logLevel}"
-            # User session naturally has access to XDG directories
-            # and PulseAudio/PipeWire session
+            # Add audio playback tools to PATH
+            "PATH=${pkgs.lib.makeBinPath [ pkgs.pulseaudio pkgs.alsa-utils pkgs.ffmpeg-headless ]}:%h/.nix-profile/bin:/run/current-system/sw/bin"
           ];
         };
 
@@ -81,13 +84,22 @@ in {
         };
       };
 
-      # Create minimal config pointing to messagebus
-      # The system-wide config at /etc/mycroft/mycroft.conf will be used as base
+      # User config supplements system config at /etc/mycroft/mycroft.conf
+      # OVOS merges both configs, user config takes precedence
       xdg.configFile."mycroft/mycroft.conf".text = builtins.toJSON {
         websocket = {
           host = cfg.messagebusHost;
           port = cfg.messagebusPort;
         };
+        # Include TTS settings from system config
+        # Note: In future, read these from config.services.ovos.speech.*
+        tts = {
+          module = "ovos-tts-plugin-piper";
+          "ovos-tts-plugin-piper" = {
+            voice = "en_US-lessac-medium";
+          };
+        };
+        disable_ocp = true;
       };
     })
 

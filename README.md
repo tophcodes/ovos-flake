@@ -15,20 +15,26 @@ A standalone NixOS flake providing native Nix packages and modules for [OpenVoic
 
 ### Installation
 
-Add this flake to your NixOS configuration:
+Add this flake to your configuration:
 
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    ovos-flake.url = "github:yourusername/ovos-flake";
+    home-manager.url = "github:nix-community/home-manager";
+    ovos.url = "github:tophcodes/ovos-flake";
   };
 
-  outputs = { self, nixpkgs, ovos-flake }: {
+  outputs = { nixpkgs, home-manager, ovos, ... }: {
     nixosConfigurations.yourhost = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
       modules = [
-        ovos-flake.nixosModules.default
+        ovos.nixosModules.default
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.users.youruser = {
+            imports = [ ovos.homeManagerModules.default ];
+          };
+        }
         ./configuration.nix
       ];
     };
@@ -38,76 +44,57 @@ Add this flake to your NixOS configuration:
 
 ### Basic Configuration
 
-Enable OpenVoiceOS with default settings:
-
+**NixOS (message bus):**
 ```nix
 {
   services.ovos = {
-    enable = true;
-    openFirewall = true;  # Allow network access to message bus
+    enable = true;  # Starts messagebus on port 8181
   };
 }
 ```
 
-This starts the OVOS message bus on port 8181 (WebSocket).
-
-### With TTS and STT
-
-Enable voice services with specific models:
-
+**Home Manager (TTS/STT services):**
 ```nix
 {
-  services.ovos = {
-    enable = true;
-    openFirewall = true;
-
-    # Text-to-Speech configuration
-    speech = {
-      enable = true;
-      backend = "piper";
-      voice = "en_US-lessac-medium";  # High-quality voice
-    };
-
-    # Speech-to-Text configuration
-    listener = {
-      enable = true;
-      backend = "faster-whisper";
-      model = "base";      # Good balance of speed/quality
-      language = "en";
-    };
+  services.ovos.audio = {
+    enable = true;  # TTS with Piper
   };
 }
+```
+
+### Custom Voice
+
+Configure TTS voice in NixOS, use in home-manager:
+
+```nix
+# NixOS
+services.ovos.speech.voice = "en_US-amy-low";  # Faster voice
+
+# Home Manager - audio service reads this from system config
+services.ovos.audio.enable = true;
 ```
 
 ## Configuration Options
 
-### Core Options
+### NixOS Module (System)
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `enable` | bool | `false` | Enable OpenVoiceOS server |
-| `host` | string | `"0.0.0.0"` | Host to bind services to |
-| `port` | port | `8181` | Port for the messagebus WebSocket server |
-| `openFirewall` | bool | `false` | Open firewall ports for OVOS services |
-| `logLevel` | enum | `"INFO"` | Log level: DEBUG, INFO, WARNING, ERROR |
-| `package` | package | `pkgs.ovosPackages.ovos-messagebus` | The ovos-messagebus package to use |
+| `enable` | bool | `false` | Enable OVOS messagebus |
+| `host` | string | `"0.0.0.0"` | Host to bind messagebus to |
+| `port` | port | `8181` | Messagebus WebSocket port |
+| `speech.backend` | string | `"piper"` | TTS backend |
+| `speech.voice` | string | `"en_US-lessac-medium"` | Piper voice |
+| `location.timezone` | string | `"America/Chicago"` | Timezone |
 
-### Speech/TTS Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `speech.enable` | bool | `false` | Enable TTS speech service |
-| `speech.backend` | string | `"piper"` | TTS backend to use |
-| `speech.voice` | string | `"en_US-lessac-medium"` | Voice name from model registry |
-
-### Listener/STT Options
+### Home Manager Module (User Services)
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `listener.enable` | bool | `false` | Enable STT listener service |
-| `listener.backend` | string | `"faster-whisper"` | STT backend to use |
-| `listener.model` | string | `"base"` | Model name from model registry |
-| `listener.language` | string | `"en"` | Language code for speech recognition |
+| `audio.enable` | bool | `false` | Enable TTS audio service |
+| `audio.logLevel` | enum | `"INFO"` | Log level |
+| `messagebusHost` | string | `"127.0.0.1"` | Messagebus host |
+| `messagebusPort` | port | `8181` | Messagebus port |
 
 ## Available Packages
 
@@ -133,7 +120,7 @@ All packages are available in the `packages.<system>` flake output:
 Build a package directly:
 
 ```bash
-nix build github:yourusername/ovos-flake#ovos-messagebus
+nix build github:tophcodes/ovos-flake#ovos-messagebus
 ```
 
 Use in your own derivations:
@@ -179,8 +166,7 @@ Models ending in `.en` are English-only and slightly faster.
 ```nix
 # In your flake
 let
-  ovosFLake = inputs.ovos-flake;
-  models = ovosFlake.lib.models;
+  models = inputs.ovos.lib.models;
 in {
   # Access a specific voice
   myVoice = models.piperVoices."en_US-lessac-medium";
@@ -247,48 +233,25 @@ The skill will be automatically exposed as `ovos-skill-weather` in the flake pac
 
 ## Advanced Examples
 
-### Production Server
-
-```nix
-{
-  services.ovos = {
-    enable = true;
-    host = "0.0.0.0";
-    port = 8181;
-    openFirewall = true;
-    logLevel = "INFO";
-
-    speech = {
-      enable = true;
-      voice = "en_US-lessac-medium";
-    };
-
-    listener = {
-      enable = true;
-      model = "small";  # Better quality for production
-      language = "en";
-    };
-  };
-
-  # Optional: restrict network access
-  networking.firewall.interfaces."eth0".allowedTCPPorts = [ 8181 ];
-}
-```
-
 ### Development Setup
 
+**NixOS:**
 ```nix
 {
   services.ovos = {
     enable = true;
     host = "127.0.0.1";  # Local only
     logLevel = "DEBUG";
+  };
+}
+```
 
-    speech.enable = true;
-    listener = {
-      enable = true;
-      model = "tiny";  # Fast for testing
-    };
+**Home Manager:**
+```nix
+{
+  services.ovos.audio = {
+    enable = true;
+    logLevel = "DEBUG";
   };
 }
 ```
@@ -300,7 +263,7 @@ Apply the overlay to get OVOS packages in your `pkgs`:
 ```nix
 {
   nixpkgs.overlays = [
-    inputs.ovos-flake.overlays.default
+    inputs.ovos.overlays.default
   ];
 
   # Now available as pkgs.ovosPackages.*
@@ -314,23 +277,23 @@ Apply the overlay to get OVOS packages in your `pkgs`:
 
 ### Systemd Commands
 
+**System services:**
 ```bash
-# Check service status
 systemctl status ovos-messagebus
-
-# View logs
 journalctl -u ovos-messagebus -f
+```
 
-# Restart service
-systemctl restart ovos-messagebus
+**User services:**
+```bash
+systemctl --user status ovos-audio
+journalctl --user -u ovos-audio -f
 ```
 
 ### File Locations
 
-- **Configuration**: `/etc/ovos/mycroft.conf`
-- **State/Data**: `/var/lib/ovos/`
-- **Runtime**: `/run/ovos/`
-- **User**: `ovos:ovos`
+- **System config**: `/etc/mycroft/mycroft.conf`
+- **System state**: `/var/lib/ovos/`
+- **User config**: `~/.config/mycroft/mycroft.conf`
 
 ## Development
 
@@ -370,23 +333,18 @@ nix build .#checks.x86_64-linux.basic
 ✅ **Phase 1: Core Infrastructure** - Complete
 ✅ **Phase 2: Essential Plugins** - Complete
 ✅ **Phase 3: Voice Services** - Complete
-🚧 **Phase 4: Security & Client** - Planned
-🚧 **Phase 5: Polish** - Planned
+✅ **Phase 4: Home Manager Module** - Complete
+🚧 **Phase 5: STT/Listener** - Planned
 
 ### Current Components
 
-- ✅ Message bus service
-- ✅ Core packages (config, utils, bus-client)
-- ✅ Plugin manager and workshop
-- ✅ Skills engine (ovos-core)
-- ✅ Audio output service
-- ✅ Skills framework
-- ✅ Model registry
-- ✅ TTS/STT configuration
-- ⏳ Listener daemon (future)
-- ⏳ TTS server daemon (future)
-- ⏳ Authentication (future)
-- ⏳ Home-manager client (future)
+- ✅ NixOS module (messagebus)
+- ✅ Home Manager module (audio service)
+- ✅ Piper TTS plugin with voice registry
+- ✅ Core packages and plugin system
+- ✅ Skills framework (buildOvosSkill)
+- ⏳ STT listener service (future)
+- ⏳ Skills service (future)
 
 ## Architecture
 

@@ -114,8 +114,8 @@ in {
     speech = {
       backend = mkOption {
         type = types.str;
-        default = "piper";
-        description = "TTS backend to use (piper, etc.)";
+        default = "ovos-tts-plugin-piper";
+        description = "TTS backend plugin name";
       };
 
       voice = mkOption {
@@ -241,9 +241,10 @@ in {
           };
         };
         log_level = cfg.logLevel;
+        disable_ocp = true;  # OCP has moved to ovos-media
         tts = {
           module = cfg.speech.backend;
-          piper = {
+          "ovos-tts-plugin-piper" = {
             voice = cfg.speech.voice;
           };
         };

@@ -39,5 +39,8 @@ lib.makeScope python3.pkgs.newScope (
 
     # TTS Plugins
     ovos-tts-plugin-piper = callPackage ./tts-plugin-piper.nix {};
+
+    # Audio Plugins
+    ovos-audio-plugin-simple = callPackage ./audio-plugin-simple.nix {};
   }
 )
