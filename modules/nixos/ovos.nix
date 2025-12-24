@@ -110,10 +110,8 @@ in {
       };
     };
 
-    # TTS/Speech configuration
+    # TTS/Speech configuration (used by home-manager client services)
     speech = {
-      enable = mkEnableOption "TTS speech service";
-
       backend = mkOption {
         type = types.str;
         default = "piper";
@@ -160,6 +158,7 @@ in {
         home = lib.mkDefault cfg.stateDir;
         createHome = lib.mkDefault true;
         description = lib.mkDefault "OpenVoiceOS system user";
+        extraGroups = [ "audio" ];  # For ALSA/audio device access
       };
 
       groups.${cfg.group} = {};
@@ -209,38 +208,6 @@ in {
       '';
     };
 
-    # Systemd service for ovos-audio (TTS)
-    systemd.services.ovos-audio = mkIf cfg.speech.enable {
-      description = "OpenVoiceOS Audio Service (TTS)";
-      wantedBy = ["multi-user.target"];
-      after = ["network.target" "ovos-messagebus.service"];
-      requires = ["ovos-messagebus.service"];
-
-      serviceConfig = {
-        Type = "simple";
-        User = cfg.user;
-        Group = cfg.group;
-        ExecStart = "${ovosPackages.ovos-audio}/bin/ovos-audio";
-        Restart = "on-failure";
-        RestartSec = "5s";
-
-        # Security hardening
-        NoNewPrivileges = true;
-        ReadWritePaths = [
-          cfg.stateDir
-        ];
-      };
-
-      environment = {
-        OVOS_LOG_LEVEL = cfg.logLevel;
-        XDG_CONFIG_HOME = "${cfg.stateDir}/.config";
-        XDG_DATA_HOME = "${cfg.stateDir}/.local/share";
-        XDG_CACHE_HOME = "${cfg.stateDir}/.cache";
-        HOME = cfg.stateDir;
-        TMPDIR = "${cfg.stateDir}/tmp";
-      };
-    };
-
     # Create system-wide OVOS configuration
     # This makes the config available to all OVOS services and CLI tools
     environment.etc."mycroft/mycroft.conf" = let
@@ -274,7 +241,6 @@ in {
           };
         };
         log_level = cfg.logLevel;
-      } // lib.optionalAttrs cfg.speech.enable {
         tts = {
           module = cfg.speech.backend;
           piper = {

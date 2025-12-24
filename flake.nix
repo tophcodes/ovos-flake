@@ -67,6 +67,10 @@
       nixosModules.default = import ./modules/nixos/ovos.nix;
       nixosModules.ovos = self.nixosModules.default;
 
+      # Home Manager module
+      homeManagerModules.default = import ./modules/home-manager/ovos.nix;
+      homeManagerModules.ovos = self.homeManagerModules.default;
+
       # Overlay
       overlays.default = final: prev: {
         ovosPackages = final.callPackage ./pkgs/ovos {};
