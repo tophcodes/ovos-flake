@@ -481,3 +481,7 @@ Apache-2.0
 - Rhasspy project for Piper TTS
 - SYSTRAN for Faster-Whisper
 - NixOS community for the packaging ecosystem
+
+---
+
+**Note:** This project was built with the assistance of generative AI (Claude Code). While the code has been reviewed and tested, please report any issues you encounter.
