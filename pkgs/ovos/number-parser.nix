@@ -20,6 +20,11 @@ buildPythonPackage rec {
     unicode-rbnf
   ];
 
+  # Create dummy requirements file that setup.py expects
+  postUnpack = ''
+    touch $sourceRoot/requirements.txt 2>/dev/null || true
+  '';
+
   doCheck = false;
 
   pythonImportsCheck = ["ovos_number_parser"];
