@@ -193,15 +193,52 @@ in {
         # Config is available at /etc/mycroft/mycroft.conf (standard OVOS location)
         OVOS_LOG_LEVEL = cfg.logLevel;
         XDG_CONFIG_HOME = "${cfg.stateDir}/.config";
+        XDG_DATA_HOME = "${cfg.stateDir}/.local/share";
+        XDG_CACHE_HOME = "${cfg.stateDir}/.cache";
         HOME = cfg.stateDir;
         TMPDIR = "${cfg.stateDir}/tmp";
       };
 
       preStart = ''
-        # Create temp directory for combo-lock
+        # Create XDG directories
         mkdir -p ${cfg.stateDir}/tmp
-        chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/tmp
+        mkdir -p ${cfg.stateDir}/.config
+        mkdir -p ${cfg.stateDir}/.local/share
+        mkdir -p ${cfg.stateDir}/.cache
+        chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
       '';
+    };
+
+    # Systemd service for ovos-audio (TTS)
+    systemd.services.ovos-audio = mkIf cfg.speech.enable {
+      description = "OpenVoiceOS Audio Service (TTS)";
+      wantedBy = ["multi-user.target"];
+      after = ["network.target" "ovos-messagebus.service"];
+      requires = ["ovos-messagebus.service"];
+
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.user;
+        Group = cfg.group;
+        ExecStart = "${ovosPackages.ovos-audio}/bin/ovos-audio";
+        Restart = "on-failure";
+        RestartSec = "5s";
+
+        # Security hardening
+        NoNewPrivileges = true;
+        ReadWritePaths = [
+          cfg.stateDir
+        ];
+      };
+
+      environment = {
+        OVOS_LOG_LEVEL = cfg.logLevel;
+        XDG_CONFIG_HOME = "${cfg.stateDir}/.config";
+        XDG_DATA_HOME = "${cfg.stateDir}/.local/share";
+        XDG_CACHE_HOME = "${cfg.stateDir}/.cache";
+        HOME = cfg.stateDir;
+        TMPDIR = "${cfg.stateDir}/tmp";
+      };
     };
 
     # Create system-wide OVOS configuration
